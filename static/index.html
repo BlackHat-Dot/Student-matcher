@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dynamic-matcher: find students who share your course slots</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="bar">
+  <span class="wordmark">dynamic-matcher</span>
+  <div class="bar-end">
+    <span class="status" id="db-status-chip"><span class="pulse-dot"></span><span id="db-status-text">Loading students</span></span>
+    <button type="button" class="link-btn" id="random-btn"><span id="random-btn-label">Random student</span></button>
+  </div>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <div class="modes" role="tablist">
+      <button type="button" class="mode-btn active" id="mode-top5-btn" data-mode="top5">Best 5 matches</button>
+      <button type="button" class="mode-btn" id="mode-pair-btn" data-mode="pair">Compare two</button>
+    </div>
+    <h1 class="headline" id="mode-title">Who shares your slots?</h1>
+    <p class="lede" id="mode-desc">Pick a student. We rank everyone else by how many theory slots they share.</p>
+
+    <form id="form-top5" class="finder" autocomplete="off" onsubmit="return false;">
+      <div class="field">
+        <label for="student-single">Student name or registration number</label>
+        <div class="autocomplete-wrapper" id="wrapper-single">
+          <div class="input-field-container">
+            <input type="text" id="student-single" class="student-input" placeholder="Steve Ryan or 25BCE1001" spellcheck="false" autocomplete="off" autocapitalize="off">
+            <button type="button" class="btn-clear" id="clear-single" aria-label="Clear student">&times;</button>
+          </div>
+          <div class="autocomplete-dropdown" id="dropdown-single" role="listbox" hidden></div>
+        </div>
+        <div class="student-meta" id="meta-single" hidden></div>
+      </div>
+      <button type="submit" class="btn" id="submit-top5-btn">Find best 5</button>
+    </form>
+
+    <form id="form-pair" class="finder pair" autocomplete="off" onsubmit="return false;" hidden>
+      <div class="field">
+        <label for="student-a">First student</label>
+        <div class="autocomplete-wrapper" id="wrapper-a">
+          <div class="input-field-container">
+            <input type="text" id="student-a" class="student-input" placeholder="Steve Ryan or 25BCE1001" spellcheck="false" autocomplete="off" autocapitalize="off">
+            <button type="button" class="btn-clear" id="clear-a" aria-label="Clear first student">&times;</button>
+          </div>
+          <div class="autocomplete-dropdown" id="dropdown-a" role="listbox" hidden></div>
+        </div>
+        <div class="student-meta" id="meta-a" hidden></div>
+      </div>
+      <button type="button" class="link-btn swap" id="swap-btn" aria-label="Swap students">Swap</button>
+      <div class="field">
+        <label for="student-b">Second student</label>
+        <div class="autocomplete-wrapper" id="wrapper-b">
+          <div class="input-field-container">
+            <input type="text" id="student-b" class="student-input" placeholder="Anand or 25BCE5404" spellcheck="false" autocomplete="off" autocapitalize="off">
+            <button type="button" class="btn-clear" id="clear-b" aria-label="Clear second student">&times;</button>
+          </div>
+          <div class="autocomplete-dropdown" id="dropdown-b" role="listbox" hidden></div>
+        </div>
+        <div class="student-meta" id="meta-b" hidden></div>
+      </div>
+      <button type="submit" class="btn" id="submit-match-btn">Compare</button>
+    </form>
+
+    <div class="alert" id="error-banner" role="alert" hidden>
+      <div>
+        <strong id="error-title">Student not found</strong>
+        <p id="error-message">Pick a name from the suggestions or check the spelling.</p>
+      </div>
+      <button type="button" class="link-btn" id="error-close">Dismiss</button>
+    </div>
+  </section>
+
+  <section class="legend" id="empty-state">
+    <div class="ribbon sample" aria-hidden="true">
+      <i class="cell matched" style="--i:0"></i><i class="cell matched" style="--i:1"></i><i class="cell mismatched" style="--i:2"></i><i class="cell matched" style="--i:3"></i><i class="cell unavailable" style="--i:4"></i><i class="cell matched" style="--i:5"></i><i class="cell mismatched" style="--i:6"></i><i class="cell matched" style="--i:7"></i>
+    </div>
+    <p class="legend-title">Every result is a ribbon with one cell per course.</p>
+    <dl class="key">
+      <div><dt><i class="cell matched"></i>Filled</dt><dd>Same slot & professor</dd></div>
+      <div><dt><i class="cell mismatched"></i>Outlined</dt><dd>Different slot or professor</dd></div>
+      <div><dt><i class="cell unavailable"></i>Hatched</dt><dd>No usable slot, skipped</dd></div>
+    </dl>
+    <p class="rules">Symmetric Matching: Evaluates all unique courses taken by either student. A course matches if both students share the exact same theory slot (e.g. E2 from E2+TE2) AND the exact same professor. Courses taken by only one student or with differing slots/professors count as different, deducting score symmetrically in both directions.</p>
+  </section>
+
+  <section class="results" id="top5-results-section" hidden>
+    <header class="results-head">
+      <h2 class="target" id="top5-target-title">Student</h2>
+      <p class="sub" id="top5-target-sub"></p>
+    </header>
+    <div class="top5-cards-list" id="top5-cards-list"></div>
+  </section>
+
+  <section class="results" id="results-section" hidden>
+    <div class="score-row">
+      <div>
+        <div class="score-number" id="match-percentage">--%</div>
+        <span class="score-tag" id="match-tag">Compatibility</span>
+      </div>
+      <div class="versus">
+        <p><strong id="base-student-name">--</strong><span id="base-student-fp"></span><em id="base-student-label">First student</em></p>
+        <p><strong id="other-student-name">--</strong><span id="other-student-fp"></span><em id="other-student-label">Second student</em></p>
+      </div>
+    </div>
+    <div id="pair-ribbon"></div>
+    <p class="adjust" id="adjustment-explanation"></p>
+
+    <dl class="tally">
+      <div><dd id="stat-matched-count">0</dd><dt>matched</dt></div>
+      <div><dd id="stat-mismatched-count">0</dd><dt>different</dt></div>
+      <div><dd id="stat-unavailable-count">0</dd><dt>skipped</dt></div>
+      <div><dd id="stat-compared-count">0</dd><dt>compared</dt></div>
+    </dl>
+
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab-btn active" data-filter="all" id="tab-all">All <span id="count-all">0</span></button>
+      <button type="button" class="tab-btn" data-filter="matched" id="tab-matched">Matched <span id="count-matched">0</span></button>
+      <button type="button" class="tab-btn" data-filter="mismatched" id="tab-mismatched">Different <span id="count-mismatched">0</span></button>
+      <button type="button" class="tab-btn" data-filter="unavailable" id="tab-unavailable">Skipped <span id="count-unavailable">0</span></button>
+    </div>
+    <div class="table-responsive">
+      <table class="breakdown-table">
+        <thead><tr><th>Course</th><th id="th-student-a">Student A</th><th id="th-student-b">Student B</th><th>Result</th></tr></thead>
+        <tbody id="breakdown-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="additional-courses-section" id="additional-courses-wrap" hidden>
+      <button type="button" class="additional-toggle" id="additional-toggle">
+        <span>Courses only the other student has (<span id="additional-count">0</span>)</span>
+        <span class="chevron-icon" aria-hidden="true">+</span>
+      </button>
+      <div class="additional-content" id="additional-content" hidden>
+        <div class="additional-grid" id="additional-grid"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">dynamic-matcher: in-memory course slot matching</footer>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
