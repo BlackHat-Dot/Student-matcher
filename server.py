@@ -247,11 +247,13 @@ class DynamicMatcherHandler(SimpleHTTPRequestHandler):
         if req_path in ("/", ""):
             req_path = "/index.html"
 
-        clean_path = os.path.normpath(req_path.lstrip("/"))
+        clean_path = os.path.normpath(req_path.lstrip("/\\")).replace("\\", "/")
         if clean_path.startswith("static/"):
             clean_path = clean_path[len("static/") :]
+        elif clean_path == "static":
+            clean_path = "index.html"
 
-        full_file_path = os.path.join(self.static_dir, clean_path)
+        full_file_path = os.path.normpath(os.path.join(self.static_dir, clean_path))
 
         if not os.path.exists(full_file_path) or os.path.isdir(full_file_path):
             self.send_error(404, f"File not found: {req_path}")
