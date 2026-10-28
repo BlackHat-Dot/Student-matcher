@@ -74,7 +74,12 @@ class DynamicMatcherHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/search":
             q = query.get("q", [""])[0]
-            limit = int(query.get("limit", [10])[0])
+            try:
+                limit = int(query.get("limit", [10])[0])
+                limit = max(1, min(limit, 100))
+            except (ValueError, TypeError):
+                limit = 10
+
             if not self.database:
                 self._send_error_json("Database not initialized", 500)
                 return
