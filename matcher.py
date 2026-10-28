@@ -404,7 +404,7 @@ class StudentDatabase:
         return results
 
     def get_student(self, name_query: str) -> StudentRecord:
-        """Find student by exact name, normalized name, or registration number."""
+        """Find student by exact name, normalized name, registration number, or display name."""
         q = name_query.strip()
         if not q:
             raise StudentNotFoundError("Student name cannot be empty.")
@@ -419,6 +419,13 @@ class StudentDatabase:
         for rec in self.students.values():
             if rec.reg_no and rec.reg_no.lower() == q_lower:
                 return rec
+
+        exact_display = [
+            rec for rec in self.students.values()
+            if rec.display_name and rec.display_name.lower() == q_lower
+        ]
+        if len(exact_display) == 1:
+            return exact_display[0]
 
         matches = [name for name in self.students if q_lower in name.lower()]
         if len(matches) == 1:
