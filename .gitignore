@@ -1,0 +1,23 @@
+# Database and confidential student records
+bce_students_database*.json
+students_missing_faculty.txt
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Test & coverage caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment & IDE
+.venv/
+venv/
+ENV/
+.idea/
+.vscode/
+*.swp
+*.bak
