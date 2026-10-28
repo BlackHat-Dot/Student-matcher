@@ -14,12 +14,14 @@ import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from matcher import StudentDatabase, StudentNotFoundError, SameStudentError, MatchResult
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Default database search paths
 DB_PATHS = [
-    "bce_students_database_1.json",
+    os.path.join(BASE_DIR, "bce_students_database.json"),
     "bce_students_database.json",
-    "/home/vijay/Downloads/Dynamic-matcher/bce_students_database_1.json",
-    "/home/vijay/Downloads/Dynamic-matcher/bce_students_database.json",
+    os.path.join(BASE_DIR, "bce_students_database_1.json"),
+    "bce_students_database_1.json",
 ]
 
 
@@ -27,7 +29,7 @@ class DynamicMatcherHandler(SimpleHTTPRequestHandler):
     """Custom HTTP request handler for Dynamic Matcher API and static files."""
 
     database: StudentDatabase = None
-    static_dir: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    static_dir: str = os.path.join(BASE_DIR, "static")
 
     def _send_json_response(self, data: dict, status_code: int = 200):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
