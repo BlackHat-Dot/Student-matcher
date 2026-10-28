@@ -1,5 +1,9 @@
 # dynamic-matcher
 
+![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Tests](https://img.shields.io/badge/tests-24%20passed-brightgreen.svg)
+![Zero Dependencies](https://img.shields.io/badge/dependencies-standard%20library-orange.svg)
+
 **dynamic-matcher** is a web application designed to compute and visualize schedule and slot compatibility between students based on their course registrations.
 
 ---
@@ -226,8 +230,7 @@ python3 -m unittest discover tests
 
 ```
 dynamic-matcher/
-├── bce_students_database.json        # Original dataset (1,555 students)
-├── bce_students_database_1.json      # Symlinked database file
+├── .gitignore                        # Git ignore rules for database and bytecode caches
 ├── matcher.py                        # Core matching engine, Inverted Index & Min-Heap
 ├── server.py                         # Multi-threaded HTTP server & REST API
 ├── static/
@@ -238,6 +241,7 @@ dynamic-matcher/
 │   └── index.html                    # Single-page web application interface
 ├── tests/
 │   ├── __init__.py
-│   └── test_matcher.py               # Automated test suite (19 tests)
+│   └── test_matcher.py               # Automated test suite (24 tests)
+├── unique_courses.json               # Extracted unique course reference catalogue
 └── README.md                         # Project documentation
 ```
