@@ -469,6 +469,13 @@ class TestDatabaseIntegration(unittest.TestCase):
         self.assertEqual(res_ns.formatted_percentage, "20%")
         self.assertEqual(res_sn.match_percentage, res_ns.match_percentage)
 
+    def test_get_student_by_display_name(self):
+        """Verify student can be looked up by unique display name despite substring collisions."""
+        student = self.db.get_student("ADITYA")
+        self.assertEqual(student.name, "S2S ADITYA 25BCE1025")
+        self.assertEqual(student.display_name, "ADITYA")
+        self.assertEqual(student.reg_no, "25BCE1025")
+
 
 if __name__ == "__main__":
     unittest.main()
